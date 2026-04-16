@@ -1,0 +1,99 @@
+location_id,location_name,city,region,country,postal_code,latitude,longitude,query_hint
+toronto-ontario-ca-6167865,"Toronto, Ontario, Canada",Toronto,Ontario,Canada,,43.70643,-79.39864,road gravel mtb
+ottawa-ontario-ca-6094817,"Ottawa, Ontario, Canada",Ottawa,Ontario,Canada,,45.41117,-75.69812,road gravel mtb
+mississauga-ontario-ca-6075357,"Mississauga, Ontario, Canada",Mississauga,Ontario,Canada,,43.5789,-79.6583,road gravel mtb
+brampton-ontario-ca-5907364,"Brampton, Ontario, Canada",Brampton,Ontario,Canada,,43.68341,-79.76633,road gravel mtb
+hamilton-ontario-ca-5969782,"Hamilton, Ontario, Canada",Hamilton,Ontario,Canada,,43.25011,-79.84963,road gravel mtb
+london-ontario-ca-6058560,"London, Ontario, Canada",London,Ontario,Canada,,42.98339,-81.23304,road gravel mtb
+etobicoke-ontario-ca-5950268,"Etobicoke, Ontario, Canada",Etobicoke,Ontario,Canada,,43.64415,-79.56985,road gravel mtb
+markham-ontario-ca-6066513,"Markham, Ontario, Canada",Markham,Ontario,Canada,,43.86682,-79.2663,road gravel mtb
+vaughan-ontario-ca-6173577,"Vaughan, Ontario, Canada",Vaughan,Ontario,Canada,,43.8361,-79.49827,road gravel mtb
+kitchener-ontario-ca-5992996,"Kitchener, Ontario, Canada",Kitchener,Ontario,Canada,,43.42537,-80.5112,road gravel mtb
+windsor-ontario-ca-6182962,"Windsor, Ontario, Canada",Windsor,Ontario,Canada,,42.30008,-83.01654,road gravel mtb
+oakville-ontario-ca-6092122,"Oakville, Ontario, Canada",Oakville,Ontario,Canada,,43.45011,-79.68292,road gravel mtb
+richmond-hill-ontario-ca-6122091,"Richmond Hill, Ontario, Canada",Richmond Hill,Ontario,Canada,,43.87111,-79.43725,road gravel mtb
+burlington-ontario-ca-5911592,"Burlington, Ontario, Canada",Burlington,Ontario,Canada,,43.38621,-79.83713,road gravel mtb
+nepean-ontario-ca-6087029,"Nepean, Ontario, Canada",Nepean,Ontario,Canada,,45.33619,-75.7225,road gravel mtb
+oshawa-ontario-ca-6094578,"Oshawa, Ontario, Canada",Oshawa,Ontario,Canada,,43.90012,-78.84957,road gravel mtb
+greater-sudbury-ontario-ca-5964700,"Greater Sudbury, Ontario, Canada",Greater Sudbury,Ontario,Canada,,46.49,-80.99001,road gravel mtb
+gloucester-ontario-ca-5962204,"Gloucester, Ontario, Canada",Gloucester,Ontario,Canada,,45.35,-75.63333,road gravel mtb
+barrie-ontario-ca-5894171,"Barrie, Ontario, Canada",Barrie,Ontario,Canada,,44.40011,-79.66634,road gravel mtb
+guelph-ontario-ca-5967629,"Guelph, Ontario, Canada",Guelph,Ontario,Canada,,43.54594,-80.25599,road gravel mtb
+whitby-ontario-ca-6180170,"Whitby, Ontario, Canada",Whitby,Ontario,Canada,,43.88342,-78.93287,road gravel mtb
+st-catharines-ontario-ca-6155721,"St. Catharines, Ontario, Canada",St. Catharines,Ontario,Canada,,43.17126,-79.24267,road gravel mtb
+milton-ontario-ca-6074377,"Milton, Ontario, Canada",Milton,Ontario,Canada,,43.51681,-79.88294,road gravel mtb
+kingston-ontario-ca-5992500,"Kingston, Ontario, Canada",Kingston,Ontario,Canada,,44.22976,-76.48098,road gravel mtb
+cambridge-ontario-ca-5913695,"Cambridge, Ontario, Canada",Cambridge,Ontario,Canada,,43.3601,-80.31269,road gravel mtb
+orleans-ontario-ca-8556295,"Orleans, Ontario, Canada",Orleans,Ontario,Canada,,45.45732,-75.50433,road gravel mtb
+ottawa-south-ontario-ca-6094835,"Ottawa South, Ontario, Canada",Ottawa South,Ontario,Canada,,45.3921,-75.68725,road gravel mtb
+ajax-ontario-ca-5882873,"Ajax, Ontario, Canada",Ajax,Ontario,Canada,,43.85012,-79.03288,road gravel mtb
+thunder-bay-ontario-ca-6166142,"Thunder Bay, Ontario, Canada",Thunder Bay,Ontario,Canada,,48.38202,-89.25018,road gravel mtb
+waterloo-ontario-ca-6176823,"Waterloo, Ontario, Canada",Waterloo,Ontario,Canada,,43.4668,-80.51639,road gravel mtb
+brantford-ontario-ca-5907990,"Brantford, Ontario, Canada",Brantford,Ontario,Canada,,43.1334,-80.26636,road gravel mtb
+niagara-falls-ontario-ca-6087892,"Niagara Falls, Ontario, Canada",Niagara Falls,Ontario,Canada,,43.10012,-79.06627,road gravel mtb
+pickering-ontario-ca-6104111,"Pickering, Ontario, Canada",Pickering,Ontario,Canada,,43.90012,-79.13289,road gravel mtb
+newmarket-ontario-ca-6087701,"Newmarket, Ontario, Canada",Newmarket,Ontario,Canada,,44.05011,-79.46631,road gravel mtb
+kanata-ontario-ca-5989117,"Kanata, Ontario, Canada",Kanata,Ontario,Canada,,45.3001,-75.91606,road gravel mtb
+peterborough-ontario-ca-6101645,"Peterborough, Ontario, Canada",Peterborough,Ontario,Canada,,44.30012,-78.31623,road gravel mtb
+caledon-ontario-ca-5913414,"Caledon, Ontario, Canada",Caledon,Ontario,Canada,,43.86544,-79.99322,road gravel mtb
+stoney-creek-ontario-ca-6157390,"Stoney Creek, Ontario, Canada",Stoney Creek,Ontario,Canada,,43.21681,-79.76633,road gravel mtb
+sarnia-ontario-ca-6141190,"Sarnia, Ontario, Canada",Sarnia,Ontario,Canada,,42.97866,-82.40407,road gravel mtb
+sault-ste-marie-ontario-ca-6141439,"Sault Ste. Marie, Ontario, Canada",Sault Ste. Marie,Ontario,Canada,,46.51677,-84.33325,road gravel mtb
+halton-hills-ontario-ca-5969721,"Halton Hills, Ontario, Canada",Halton Hills,Ontario,Canada,,43.6403,-79.93146,road gravel mtb
+norfolk-county-ontario-ca-6089125,"Norfolk County, Ontario, Canada",Norfolk County,Ontario,Canada,,42.8334,-80.38297,road gravel mtb
+aurora-ontario-ca-5888377,"Aurora, Ontario, Canada",Aurora,Ontario,Canada,,44.00011,-79.46632,road gravel mtb
+welland-ontario-ca-6177869,"Welland, Ontario, Canada",Welland,Ontario,Canada,,42.98342,-79.24958,road gravel mtb
+belleville-ontario-ca-5897884,"Belleville, Ontario, Canada",Belleville,Ontario,Canada,,44.16682,-77.38277,road gravel mtb
+north-bay-ontario-ca-6089426,"North Bay, Ontario, Canada",North Bay,Ontario,Canada,,46.3168,-79.46633,road gravel mtb
+whitchurch-stouffville-ontario-ca-6180176,"Whitchurch-Stouffville, Ontario, Canada",Whitchurch-Stouffville,Ontario,Canada,,44.00012,-79.3163,road gravel mtb
+cornwall-ontario-ca-5928065,"Cornwall, Ontario, Canada",Cornwall,Ontario,Canada,,45.01809,-74.72815,road gravel mtb
+georgetown-ontario-ca-5960533,"Georgetown, Ontario, Canada",Georgetown,Ontario,Canada,,43.65011,-79.91634,road gravel mtb
+quinte-west-ontario-ca-6115355,"Quinte West, Ontario, Canada",Quinte West,Ontario,Canada,,44.18342,-77.56618,road gravel mtb
+chatham-ontario-ca-5920457,"Chatham, Ontario, Canada",Chatham,Ontario,Canada,,42.41224,-82.18494,road gravel mtb
+innisfil-ontario-ca-5983433,"Innisfil, Ontario, Canada",Innisfil,Ontario,Canada,,44.30011,-79.64964,road gravel mtb
+timmins-ontario-ca-6166739,"Timmins, Ontario, Canada",Timmins,Ontario,Canada,,48.46686,-81.33312,road gravel mtb
+stittsville-ontario-ca-6156855,"Stittsville, Ontario, Canada",Stittsville,Ontario,Canada,,45.2501,-75.91606,road gravel mtb
+ancaster-ontario-ca-8285452,"Ancaster, Ontario, Canada",Ancaster,Ontario,Canada,,43.21806,-79.98716,road gravel mtb
+woodstock-ontario-ca-6184365,"Woodstock, Ontario, Canada",Woodstock,Ontario,Canada,,43.13339,-80.7497,road gravel mtb
+bowmanville-ontario-ca-5906831,"Bowmanville, Ontario, Canada",Bowmanville,Ontario,Canada,,43.91682,-78.68286,road gravel mtb
+st-thomas-ontario-ca-6158357,"St. Thomas, Ontario, Canada",St. Thomas,Ontario,Canada,,42.77361,-81.18038,road gravel mtb
+stouffville-ontario-ca-6157718,"Stouffville, Ontario, Canada",Stouffville,Ontario,Canada,,43.96682,-79.2496,road gravel mtb
+brant-ontario-ca-5907983,"Brant, Ontario, Canada",Brant,Ontario,Canada,,43.1334,-80.34967,road gravel mtb
+leamington-ontario-ca-6051122,"Leamington, Ontario, Canada",Leamington,Ontario,Canada,,42.05009,-82.59981,road gravel mtb
+lasalle-ontario-ca-6050177,"LaSalle, Ontario, Canada",LaSalle,Ontario,Canada,,42.24481,-83.06095,road gravel mtb
+stratford-ontario-ca-6157977,"Stratford, Ontario, Canada",Stratford,Ontario,Canada,,43.36679,-80.94972,road gravel mtb
+orillia-ontario-ca-6094325,"Orillia, Ontario, Canada",Orillia,Ontario,Canada,,44.60868,-79.42068,road gravel mtb
+orangeville-ontario-ca-6094201,"Orangeville, Ontario, Canada",Orangeville,Ontario,Canada,,43.9168,-80.09967,road gravel mtb
+fort-erie-ontario-ca-5955815,"Fort Erie, Ontario, Canada",Fort Erie,Ontario,Canada,,42.90012,-78.93286,road gravel mtb
+grimsby-ontario-ca-5967149,"Grimsby, Ontario, Canada",Grimsby,Ontario,Canada,,43.20011,-79.56631,road gravel mtb
+bolton-ontario-ca-5905308,"Bolton, Ontario, Canada",Bolton,Ontario,Canada,,43.87952,-79.73791,road gravel mtb
+prince-edward-ontario-ca-6113355,"Prince Edward, Ontario, Canada",Prince Edward,Ontario,Canada,,44.00012,-77.24946,road gravel mtb
+brooklin-ontario-ca-5909483,"Brooklin, Ontario, Canada",Brooklin,Ontario,Canada,,43.95833,-78.95972,road gravel mtb
+fallingbrook-ontario-ca-12070742,"Fallingbrook, Ontario, Canada",Fallingbrook,Ontario,Canada,,45.47558,-75.48401,road gravel mtb
+waterdown-ontario-ca-6176722,"Waterdown, Ontario, Canada",Waterdown,Ontario,Canada,,43.33341,-79.88293,road gravel mtb
+midland-ontario-ca-6073363,"Midland, Ontario, Canada",Midland,Ontario,Canada,,44.7501,-79.88296,road gravel mtb
+east-gwillimbury-ontario-ca-5945707,"East Gwillimbury, Ontario, Canada",East Gwillimbury,Ontario,Canada,,44.10087,-79.43785,road gravel mtb
+brockville-ontario-ca-5909294,"Brockville, Ontario, Canada",Brockville,Ontario,Canada,,44.59132,-75.68705,road gravel mtb
+strathroy-ontario-ca-6158027,"Strathroy, Ontario, Canada",Strathroy,Ontario,Canada,,42.9551,-81.62232,road gravel mtb
+tecumseh-ontario-ca-6162416,"Tecumseh, Ontario, Canada",Tecumseh,Ontario,Canada,,42.316,-82.884,road gravel mtb
+kingsville-ontario-ca-5992526,"Kingsville, Ontario, Canada",Kingsville,Ontario,Canada,,42.10009,-82.73312,road gravel mtb
+collingwood-ontario-ca-5925975,"Collingwood, Ontario, Canada",Collingwood,Ontario,Canada,,44.4834,-80.21638,road gravel mtb
+owen-sound-ontario-ca-6095645,"Owen Sound, Ontario, Canada",Owen Sound,Ontario,Canada,,44.56717,-80.94349,road gravel mtb
+uxbridge-ontario-ca-6172932,"Uxbridge, Ontario, Canada",Uxbridge,Ontario,Canada,,44.10012,-79.11628,road gravel mtb
+clarence-rockland-ontario-ca-5923101,"Clarence-Rockland, Ontario, Canada",Clarence-Rockland,Ontario,Canada,,45.5501,-75.29101,road gravel mtb
+fergus-ontario-ca-7871320,"Fergus, Ontario, Canada",Fergus,Ontario,Canada,,43.70604,-80.37761,road gravel mtb
+wasaga-beach-ontario-ca-6176421,"Wasaga Beach, Ontario, Canada",Wasaga Beach,Ontario,Canada,,44.5168,-80.01637,road gravel mtb
+lindsay-ontario-ca-6054350,"Lindsay, Ontario, Canada",Lindsay,Ontario,Canada,,44.35012,-78.73286,road gravel mtb
+huntsville-ontario-ca-5978765,"Huntsville, Ontario, Canada",Huntsville,Ontario,Canada,,45.33341,-79.21632,road gravel mtb
+alliston-ontario-ca-5884051,"Alliston, Ontario, Canada",Alliston,Ontario,Canada,,44.15011,-79.86635,road gravel mtb
+thorold-ontario-ca-6165719,"Thorold, Ontario, Canada",Thorold,Ontario,Canada,,43.11682,-79.19958,road gravel mtb
+tillsonburg-ontario-ca-6166580,"Tillsonburg, Ontario, Canada",Tillsonburg,Ontario,Canada,,42.85986,-80.72617,road gravel mtb
+port-colborne-ontario-ca-6111704,"Port Colborne, Ontario, Canada",Port Colborne,Ontario,Canada,,42.90012,-79.23288,road gravel mtb
+cobourg-ontario-ca-5924579,"Cobourg, Ontario, Canada",Cobourg,Ontario,Canada,,43.95977,-78.16515,road gravel mtb
+niagara-on-the-lake-ontario-ca-6087905,"Niagara-on-the-Lake, Ontario, Canada",Niagara-on-the-Lake,Ontario,Canada,,43.25655,-79.08527,road gravel mtb
+valley-east-ontario-ca-12070764,"Valley East, Ontario, Canada",Valley East,Ontario,Canada,,46.64499,-80.9973,road gravel mtb
+petawawa-ontario-ca-6101606,"Petawawa, Ontario, Canada",Petawawa,Ontario,Canada,,45.89452,-77.28007,road gravel mtb
+vanier-ontario-ca-6173404,"Vanier, Ontario, Canada",Vanier,Ontario,Canada,,45.4399,-75.66498,road gravel mtb
+bracebridge-ontario-ca-5907092,"Bracebridge, Ontario, Canada",Bracebridge,Ontario,Canada,,45.03341,-79.31633,road gravel mtb
+greater-napanee-ontario-ca-5965812,"Greater Napanee, Ontario, Canada",Greater Napanee,Ontario,Canada,,44.25012,-76.94944,road gravel mtb
+kenora-ontario-ca-5991055,"Kenora, Ontario, Canada",Kenora,Ontario,Canada,,49.76741,-94.48985,road gravel mtb

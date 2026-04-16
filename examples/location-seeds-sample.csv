@@ -1,0 +1,3 @@
+location_id,location_name,city,region,country,postal_code,latitude,longitude,query_hint
+toronto-on,Toronto,Toronto,Ontario,Canada,,43.6532,-79.3832,"road gravel mtb"
+ottawa-on,Ottawa,Ottawa,Ontario,Canada,,45.4215,-75.6972,"road gravel mtb"
