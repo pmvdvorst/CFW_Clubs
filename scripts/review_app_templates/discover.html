@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Discovery</h2>
+    <p>Run the OpenAI discovery script with a verified seed CSV, controlled filters, and live logs.</p>
+  </div>
+  <div class="page-meta">
+    <span class="meta-chip">Staging file: {{ staging_csv }}</span>
+    {% if openai_api_key_status.configured %}
+      <span class="meta-chip">OpenAI: {{ openai_api_key_status.label }}</span>
+    {% else %}
+      <span class="meta-chip meta-chip-warn">OpenAI: {{ openai_api_key_status.label }}</span>
+    {% endif %}
+    {% if staging_locked and lock_details %}
+      <span class="meta-chip meta-chip-warn">Locked by {{ lock_details.owner }} since {{ lock_details.created_at }}</span>
+    {% endif %}
+  </div>
+</section>
+
+<section class="grid-two">
+  <form method="post" action="{{ url_for('discover_run') }}" class="panel stack-lg">
+    <h3>Run Settings</h3>
+
+    <label>
+      {{ ui.field_label("Seed CSV", field_help.discover.seed_csv) }}
+      <input name="seed_csv" list="csv-options" value="{{ form_values.seed_csv }}" required>
+    </label>
+
+    <label>
+      {{ ui.field_label("Staging CSV", field_help.discover.staging_csv) }}
+      <input name="staging_csv" list="csv-options" value="{{ form_values.staging_csv }}" required>
+    </label>
+
+    <div class="stack-sm">
+      <label>
+        {{ ui.field_label("OpenAI API key", field_help.discover.openai_api_key) }}
+        <input
+          name="openai_api_key"
+          type="password"
+          autocomplete="off"
+          spellcheck="false"
+          placeholder="Paste a key to save it for this app session"
+        >
+      </label>
+      <p class="muted">{{ openai_api_key_status.message }}</p>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Discovery model", field_help.discover.discovery_model) }}
+        <input name="discovery_model" value="{{ form_values.discovery_model }}">
+      </label>
+      <label>
+        {{ ui.field_label("Verification model", field_help.discover.verification_model) }}
+        <input name="verification_model" value="{{ form_values.verification_model }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Reasoning effort", field_help.discover.reasoning_effort) }}
+        <input name="reasoning_effort" value="{{ form_values.reasoning_effort }}">
+      </label>
+      <label>
+        {{ ui.field_label("Max locations", field_help.discover.max_locations) }}
+        <input name="max_locations" type="number" min="0" value="{{ form_values.max_locations }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Min confidence", field_help.discover.min_confidence) }}
+        <input name="min_confidence" type="number" step="0.01" min="0" max="1" value="{{ form_values.min_confidence }}">
+      </label>
+      <label>
+        {{ ui.field_label("Max candidates per location", field_help.discover.max_candidates_per_location) }}
+        <input name="max_candidates_per_location" type="number" min="1" value="{{ form_values.max_candidates_per_location }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Discovery output tokens", field_help.discover.discovery_max_output_tokens) }}
+        <input name="discovery_max_output_tokens" type="number" min="1" value="{{ form_values.discovery_max_output_tokens }}">
+      </label>
+      <label>
+        {{ ui.field_label("Verification output tokens", field_help.discover.verification_max_output_tokens) }}
+        <input name="verification_max_output_tokens" type="number" min="1" value="{{ form_values.verification_max_output_tokens }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Max retries", field_help.discover.max_retries) }}
+        <input name="max_retries" type="number" min="0" value="{{ form_values.max_retries }}">
+      </label>
+      <label>
+        {{ ui.field_label("Retry buffer seconds", field_help.discover.retry_buffer_seconds) }}
+        <input name="retry_buffer_seconds" type="number" step="0.1" min="0" value="{{ form_values.retry_buffer_seconds }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Timeout seconds", field_help.discover.timeout) }}
+        <input name="timeout" type="number" step="0.1" min="1" value="{{ form_values.timeout }}">
+      </label>
+      <label>
+        {{ ui.field_label("Pause seconds", field_help.discover.pause_seconds) }}
+        <input name="pause_seconds" type="number" step="0.1" min="0" value="{{ form_values.pause_seconds }}">
+      </label>
+    </div>
+
+    <div class="checkbox-row">
+      <label class="checkbox-label">
+        <input type="checkbox" name="skip_verification" value="1" {% if form_values.skip_verification %}checked{% endif %}>
+        {{ ui.field_label("Skip verification", field_help.discover.skip_verification) }}
+      </label>
+      <label class="checkbox-label">
+        <input type="checkbox" name="replace_existing" value="1" {% if form_values.replace_existing %}checked{% endif %}>
+        {{ ui.field_label("Replace matching staging rows", field_help.discover.replace_existing) }}
+      </label>
+    </div>
+
+    <div class="button-row">
+      <button type="submit" class="button button-primary">Run discovery</button>
+      <a class="button" href="{{ url_for('seed_page', output_csv=form_values.seed_csv) }}">Back to seed setup</a>
+      <a class="button" href="{{ url_for('review_page', staging_csv=form_values.staging_csv) }}">Open review</a>
+    </div>
+  </form>
+
+  <section
+    class="panel stack-lg"
+    data-discovery-poll="1"
+    data-status-url="{{ url_for('discovery_status', staging_csv=form_values.staging_csv) }}"
+  >
+    <h3>Run Status</h3>
+    <div class="status-grid">
+      <div>
+        <span class="label">Status</span>
+        <strong data-discovery-status>{{ job_snapshot.status }}</strong>
+      </div>
+      <div>
+        <span class="label">Started</span>
+        <strong data-discovery-started>{{ job_snapshot.started_at or "Not started" }}</strong>
+      </div>
+      <div>
+        <span class="label">Finished</span>
+        <strong data-discovery-finished>{{ job_snapshot.finished_at or "Still running" }}</strong>
+      </div>
+      <div>
+        <span class="label">Return code</span>
+        <strong data-discovery-return>{{ job_snapshot.return_code if job_snapshot.return_code is not none else "Pending" }}</strong>
+      </div>
+    </div>
+
+    <div class="stack-sm">
+      <span class="label">Command</span>
+      <code class="command-preview" data-discovery-command>{{ " ".join(job_snapshot.command) if job_snapshot.command else "No run yet." }}</code>
+    </div>
+
+    <div class="stack-sm">
+      <span class="label">Logs</span>
+      <pre class="log-pane" data-discovery-log>{{ job_snapshot.log or "No logs yet." }}</pre>
+    </div>
+  </section>
+</section>
+
+<datalist id="csv-options">
+  {% for csv_file in csv_files %}
+    <option value="{{ csv_file }}"></option>
+  {% endfor %}
+</datalist>
+{% endblock %}

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page_title }} | CFW Review App</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='review_app.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="site-brand">
+      <h1>CFW Review App</h1>
+      <p>Discovery, approval, and GeoDirectory export in one local workflow.</p>
+    </div>
+    <nav class="site-nav">
+      <a class="{% if request.endpoint == 'seed_page' %}is-active{% endif %}" href="{{ url_for('seed_page') }}">Seed Setup</a>
+      <a class="{% if request.endpoint == 'discover_page' %}is-active{% endif %}" href="{{ url_for('discover_page') }}">Discovery</a>
+      <a class="{% if request.endpoint == 'review_page' %}is-active{% endif %}" href="{{ url_for('review_page') }}">Review</a>
+      <a class="{% if request.endpoint in ('export_page', 'export_generate') %}is-active{% endif %}" href="{{ url_for('export_page') }}">Export</a>
+    </nav>
+  </header>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <section class="flash-stack">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </section>
+    {% endif %}
+  {% endwith %}
+
+  <main class="page-shell">
+    {% block content %}{% endblock %}
+  </main>
+
+  <script src="{{ url_for('static', filename='review_app.js') }}"></script>
+</body>
+</html>

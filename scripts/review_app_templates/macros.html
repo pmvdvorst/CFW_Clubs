@@ -1,0 +1,8 @@
+{% macro field_label(text, help_text="") -%}
+  <span class="field-label">
+    <span class="label-text">{{ text }}</span>
+    {% if help_text %}
+      <span class="help-icon" tabindex="0" aria-label="{{ help_text }}" data-tooltip="{{ help_text }}">i</span>
+    {% endif %}
+  </span>
+{%- endmacro %}

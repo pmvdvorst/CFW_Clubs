@@ -1,0 +1,533 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Review</h2>
+    <p>Filter staged clubs, make quick edits, approve the good rows, and build an export batch.</p>
+  </div>
+  <div class="page-meta">
+    <span class="meta-chip">{{ filtered_count }} of {{ total_rows }} rows shown</span>
+    <span class="meta-chip">{{ selected_count }} selected for export</span>
+    <span class="meta-chip">File: {{ staging_csv }}</span>
+  </div>
+</section>
+
+{% if staging_locked and lock_details %}
+  <div class="flash flash-warning">This staging file is locked by {{ lock_details.owner }} since {{ lock_details.created_at }}. Review is read-only until discovery finishes.</div>
+{% endif %}
+
+<section class="review-layout">
+  <aside class="panel stack-lg review-sidebar">
+    <h3>Filters</h3>
+    <form method="get" action="{{ url_for('review_page') }}" class="stack-md">
+      <input type="hidden" name="staging_csv" value="{{ staging_csv }}">
+
+      <label>
+        {{ ui.field_label("Status", field_help.review_filters.review_status) }}
+        <select name="review_status">
+          <option value="">All</option>
+          {% for item in options.review_statuses %}
+            <option value="{{ item }}" {% if filters.review_status == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        {{ ui.field_label("City", field_help.review_filters.city) }}
+        <select name="city">
+          <option value="">All</option>
+          {% for item in options.cities %}
+            <option value="{{ item }}" {% if filters.city == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        {{ ui.field_label("Region", field_help.review_filters.region) }}
+        <select name="region">
+          <option value="">All</option>
+          {% for item in options.regions %}
+            <option value="{{ item }}" {% if filters.region == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <div class="grid-two-tight">
+        <label>
+          {{ ui.field_label("Min confidence", field_help.review_filters.min_confidence) }}
+          <input name="min_confidence" type="number" min="0" max="1" step="0.01" value="{{ filters.min_confidence }}">
+        </label>
+        <label>
+          {{ ui.field_label("Max confidence", field_help.review_filters.max_confidence) }}
+          <input name="max_confidence" type="number" min="0" max="1" step="0.01" value="{{ filters.max_confidence }}">
+        </label>
+      </div>
+
+      <label>
+        {{ ui.field_label("Audience", field_help.review_filters.audience) }}
+        <select name="audience">
+          <option value="">All</option>
+          {% for item in options.audiences %}
+            <option value="{{ item }}" {% if filters.audience == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        {{ ui.field_label("Discipline", field_help.review_filters.discipline) }}
+        <select name="discipline">
+          <option value="">All</option>
+          {% for item in options.disciplines %}
+            <option value="{{ item }}" {% if filters.discipline == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        {{ ui.field_label("Existing or new", field_help.review_filters.existing_state) }}
+        <select name="existing_state">
+          <option value="">All</option>
+          <option value="new" {% if filters.existing_state == 'new' %}selected{% endif %}>New only</option>
+          <option value="existing" {% if filters.existing_state == 'existing' %}selected{% endif %}>Existing only</option>
+        </select>
+      </label>
+
+      <label>
+        {{ ui.field_label("Image rights", field_help.review_filters.image_rights_status) }}
+        <select name="image_rights_status">
+          <option value="">All</option>
+          {% for item in options.image_statuses %}
+            <option value="{{ item }}" {% if filters.image_rights_status == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        {{ ui.field_label("Flag", field_help.review_filters.flag) }}
+        <select name="flag">
+          <option value="">All</option>
+          <option value="flagged" {% if filters.flag == 'flagged' %}selected{% endif %}>Any flagged row</option>
+          {% for flag_id, label in all_flag_items %}
+            <option value="{{ flag_id }}" {% if filters.flag == flag_id %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <div class="button-row">
+        <button class="button button-primary" type="submit">Apply filters</button>
+        <a class="button" href="{{ url_for('review_page', staging_csv=staging_csv) }}">Reset</a>
+      </div>
+    </form>
+  </aside>
+
+  <section class="review-main stack-lg">
+    <form
+      method="post"
+      action="{{ url_for('review_bulk') }}"
+      class="panel stack-md"
+      id="bulk-actions-form"
+      data-bulk-form="1"
+    >
+      <input type="hidden" name="staging_csv" value="{{ staging_csv }}">
+      <input type="hidden" name="action" value="">
+      <input type="hidden" name="row_ids" value="">
+      <input type="hidden" name="next" value="{{ request.full_path if request.query_string else request.path }}">
+
+      <div class="button-row wrap">
+        <button type="button" class="button button-primary" data-bulk-action="approve">Approve checked</button>
+        <button type="button" class="button" data-bulk-action="reject">Reject checked</button>
+        <button type="button" class="button" data-bulk-action="needs_research">Mark checked for research</button>
+        <button type="button" class="button" data-bulk-action="select_visible">Select visible rows</button>
+        <button type="button" class="button" data-bulk-action="clear_selection">Clear selection</button>
+        <a class="button" href="{{ url_for('export_page', staging_csv=staging_csv) }}">Open export preview</a>
+      </div>
+    </form>
+
+    <div class="panel table-panel">
+      <table class="data-table review-table">
+        <thead>
+          <tr>
+            <th>Select</th>
+            <th>Team</th>
+            <th>URL</th>
+            <th>Logo</th>
+            <th>Photos</th>
+            <th>City</th>
+            <th>Confidence</th>
+            <th>Audience</th>
+            <th>Disciplines</th>
+            <th>Description (Final)</th>
+            <th>Status</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr
+              class="{% if selected_row and selected_row._row_id == row._row_id %}is-current{% endif %}"
+              data-row-id="{{ row._row_id }}"
+              data-inline-row-editor
+              data-autosave-url="{{ url_for('update_row', row_id=row._row_id) }}"
+            >
+              <td>
+                <input
+                  type="checkbox"
+                  class="selection-checkbox"
+                  value="{{ row._row_id }}"
+                  data-selection-url="{{ url_for('selection_toggle') }}"
+                  data-staging-csv="{{ staging_csv }}"
+                  {% if row._selected %}checked{% endif %}
+                >
+              </td>
+              <td class="editable-cell team-cell">
+                <div class="table-cell-stack">
+                  <input type="hidden" name="staging_csv" value="{{ staging_csv }}">
+                  <input type="hidden" name="logo_source_url" value="{{ row.logo_source_url }}" {% if staging_locked %}disabled{% endif %}>
+                  <input type="hidden" name="cover_source_url" value="{{ row.cover_source_url }}" {% if staging_locked %}disabled{% endif %}>
+                  <input type="hidden" name="gallery_source_urls" value="{{ row.gallery_source_urls }}" {% if staging_locked %}disabled{% endif %}>
+                  <input
+                    name="club_name"
+                    value="{{ row.club_name }}"
+                    class="table-input"
+                    aria-label="Team name"
+                    {% if staging_locked %}disabled{% endif %}
+                  >
+                  <a class="table-row-link" href="{{ current_url_with(row_id=row._row_id, staging_csv=staging_csv) }}">Open detail</a>
+                  <div class="inline-edit-status" data-inline-status>
+                    {% if staging_locked %}
+                      Read-only while discovery is running.
+                    {% else %}
+                      Inline edits save automatically.
+                    {% endif %}
+                  </div>
+                </div>
+              </td>
+              <td class="editable-cell url-cell">
+                <input
+                  name="website"
+                  value="{{ row.website }}"
+                  class="table-input"
+                  aria-label="Website URL"
+                  {% if staging_locked %}disabled{% endif %}
+                >
+              </td>
+              <td class="logo-cell" data-table-logo>
+                <div class="table-media-stack" data-table-logo-slot>
+                  {% if row._logo_preview_url %}
+                    <figure class="media-card table-media-card table-logo-card">
+                      <button
+                        type="button"
+                        class="media-action-button"
+                        data-table-delete-logo
+                        aria-label="Delete logo"
+                        {% if staging_locked %}disabled{% endif %}
+                      >
+                        x
+                      </button>
+                      <div class="media-thumb media-thumb-logo">
+                        <img src="{{ row._logo_preview_url }}" alt="Logo for {{ row.club_name or row.external_id }}" loading="lazy">
+                      </div>
+                    </figure>
+                  {% else %}
+                    <div class="media-empty table-media-empty">No logo</div>
+                    <button type="button" class="button button-small" data-table-add-logo {% if staging_locked %}disabled{% endif %}>+ Add logo</button>
+                  {% endif %}
+                </div>
+              </td>
+              <td class="photos-cell" data-table-photos>
+                <div class="table-media-stack">
+                  <div class="media-strip" data-table-photo-slot role="list" aria-label="Photo previews for {{ row.club_name or row.external_id }}">
+                    {% for photo in row._photo_preview_items %}
+                      <figure class="media-card table-media-card" role="listitem">
+                        <button
+                          type="button"
+                          class="media-action-button"
+                          data-table-delete-photo-kind="{{ photo.kind }}"
+                          {% if photo.kind == 'gallery' %}data-table-delete-photo-index="{{ photo.index }}"{% endif %}
+                          aria-label="Delete {{ photo.label|lower }}"
+                          {% if staging_locked %}disabled{% endif %}
+                        >
+                          x
+                        </button>
+                        <div class="media-thumb media-thumb-photo">
+                          <img
+                            src="{{ photo.url }}"
+                            alt="{{ photo.label }} image for {{ row.club_name or row.external_id }}"
+                            loading="lazy"
+                            data-preview-image="1"
+                          >
+                        </div>
+                        <figcaption class="media-meta" data-image-size></figcaption>
+                      </figure>
+                    {% else %}
+                      <div class="media-empty table-media-empty">No photos</div>
+                    {% endfor %}
+                  </div>
+                  <button type="button" class="button button-small" data-table-add-photo {% if staging_locked %}disabled{% endif %}>+ Add picture</button>
+                </div>
+              </td>
+              <td>{{ row.city }}</td>
+              <td>{{ "%.2f"|format(row._confidence_value) }}</td>
+              <td class="editable-cell audience-cell">
+                <select name="audience" class="table-select" aria-label="Audience" {% if staging_locked %}disabled{% endif %}>
+                  <option value=""></option>
+                  {% for item in ['Women Only', 'Mixed Gender'] %}
+                    <option value="{{ item }}" {% if row.audience == item %}selected{% endif %}>{{ item }}</option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td class="editable-cell disciplines-cell">
+                <input
+                  name="disciplines_csv"
+                  value="{{ row.disciplines_csv or row.discipline_primary }}"
+                  class="table-input"
+                  aria-label="Disciplines"
+                  {% if staging_locked %}disabled{% endif %}
+                >
+              </td>
+              <td class="editable-cell description-cell">
+                <textarea
+                  name="summary_final"
+                  rows="4"
+                  class="table-textarea"
+                  aria-label="Final description"
+                  {% if staging_locked %}disabled{% endif %}
+                >{{ row.summary_final }}</textarea>
+              </td>
+              <td><span class="status-pill status-{{ row.review_status or 'blank' }}">{{ row.review_status or "blank" }}</span></td>
+              <td>
+                <div class="flag-list">
+                  {% for label in row._flag_labels %}
+                    <span class="flag-badge">{{ label }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="12" class="empty-state">No rows match the current filters.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <section class="panel stack-lg detail-panel">
+      <h3>Row Detail</h3>
+      {% if selected_row %}
+        <div class="stack-sm">
+          <strong data-detail-title data-default-title="{{ selected_row.external_id }}">{{ selected_row.club_name or selected_row.external_id }}</strong>
+          <span class="muted" data-detail-website data-source-url="{{ selected_row.source_url }}">{{ selected_row.website or selected_row.source_url or "No website yet" }}</span>
+          <div class="flag-list">
+            {% for label in selected_row._flag_labels %}
+              <span class="flag-badge">{{ label }}</span>
+            {% endfor %}
+          </div>
+        </div>
+
+        <form
+          method="post"
+          action="{{ url_for('update_row', row_id=selected_row._row_id) }}"
+          class="stack-md js-autosave-form"
+          data-autosave-url="{{ url_for('update_row', row_id=selected_row._row_id) }}"
+          data-row-id="{{ selected_row._row_id }}"
+        >
+          <input type="hidden" name="staging_csv" value="{{ staging_csv }}">
+
+          <label>
+            {{ ui.field_label("Review status", field_help.review_detail.review_status) }}
+            <select name="review_status" {% if staging_locked %}disabled{% endif %}>
+              {% for item in ['pending', 'approved', 'needs_research', 'rejected', 'published'] %}
+                <option value="{{ item }}" {% if selected_row.review_status == item %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label>
+            {{ ui.field_label("Club name", field_help.review_detail.club_name) }}
+            <input name="club_name" value="{{ selected_row.club_name }}" {% if staging_locked %}disabled{% endif %}>
+          </label>
+
+          <label>
+            {{ ui.field_label("Summary final", field_help.review_detail.summary_final) }}
+            <textarea name="summary_final" rows="5" {% if staging_locked %}disabled{% endif %}>{{ selected_row.summary_final }}</textarea>
+          </label>
+
+          <label>
+            {{ ui.field_label("Audience", field_help.review_detail.audience) }}
+            <select name="audience" {% if staging_locked %}disabled{% endif %}>
+              <option value=""></option>
+              {% for item in ['Women Only', 'Mixed Gender'] %}
+                <option value="{{ item }}" {% if selected_row.audience == item %}selected{% endif %}>{{ item }}</option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <div class="grid-two-tight">
+            <label>
+              {{ ui.field_label("Primary discipline", field_help.review_detail.discipline_primary) }}
+              <input name="discipline_primary" value="{{ selected_row.discipline_primary }}" {% if staging_locked %}disabled{% endif %}>
+            </label>
+            <label>
+              {{ ui.field_label("Disciplines CSV", field_help.review_detail.disciplines_csv) }}
+              <input name="disciplines_csv" value="{{ selected_row.disciplines_csv }}" {% if staging_locked %}disabled{% endif %}>
+            </label>
+          </div>
+
+          <div class="grid-two-tight">
+            <label>
+              {{ ui.field_label("City", field_help.review_detail.city) }}
+              <input name="city" value="{{ selected_row.city }}" {% if staging_locked %}disabled{% endif %}>
+            </label>
+            <label>
+              {{ ui.field_label("Region", field_help.review_detail.region) }}
+              <input name="region" value="{{ selected_row.region }}" {% if staging_locked %}disabled{% endif %}>
+            </label>
+          </div>
+
+          <div class="grid-two-tight">
+            <label>
+              {{ ui.field_label("Country", field_help.review_detail.country) }}
+              <input name="country" value="{{ selected_row.country }}" {% if staging_locked %}disabled{% endif %}>
+            </label>
+            <label>
+              {{ ui.field_label("Existing GD ID", field_help.review_detail.existing_gd_id) }}
+              <input name="existing_gd_id" value="{{ selected_row.existing_gd_id }}" {% if staging_locked %}disabled{% endif %}>
+            </label>
+          </div>
+
+          <label>
+            {{ ui.field_label("Website", field_help.review_detail.website) }}
+            <input name="website" value="{{ selected_row.website }}" {% if staging_locked %}disabled{% endif %}>
+          </label>
+
+          <div class="stack-md media-editor" data-media-editor data-row-id="{{ selected_row._row_id }}">
+            <div class="section-heading">
+              <strong>Media Review</strong>
+              <span class="muted">Delete bad images or add replacement URLs. Changes save automatically.</span>
+            </div>
+
+            <div class="grid-two media-manager-grid">
+              <section class="media-manager-panel stack-sm">
+                <div class="section-heading">
+                  <span class="label">Logo</span>
+                  <button
+                    type="button"
+                    class="button button-small"
+                    data-add-logo
+                    {% if selected_row._logo_preview_url %}hidden{% endif %}
+                    {% if staging_locked %}disabled{% endif %}
+                  >
+                    + Add logo
+                  </button>
+                </div>
+
+                <div class="detail-media-list" data-logo-slot>
+                  {% if selected_row._logo_preview_url %}
+                    <figure class="media-card detail-media-card detail-media-card-logo">
+                      <button type="button" class="media-action-button" data-delete-logo aria-label="Delete logo" {% if staging_locked %}disabled{% endif %}>x</button>
+                      <div class="media-thumb media-thumb-logo detail-media-thumb-logo">
+                        <img src="{{ selected_row._logo_preview_url }}" alt="Logo for {{ selected_row.club_name or selected_row.external_id }}" loading="lazy" data-preview-image="1">
+                      </div>
+                      <figcaption class="media-card-caption">
+                        <span class="media-kind-badge">Logo</span>
+                        <span class="media-meta" data-image-size></span>
+                      </figcaption>
+                    </figure>
+                  {% else %}
+                    <div class="media-empty">No logo yet.</div>
+                  {% endif %}
+                </div>
+              </section>
+
+              <section class="media-manager-panel stack-sm">
+                <div class="section-heading">
+                  <span class="label">Pictures</span>
+                  <button type="button" class="button button-small" data-add-photo {% if staging_locked %}disabled{% endif %}>+ Add picture</button>
+                </div>
+
+                <div class="detail-media-list detail-media-list-scroll" data-photo-slot>
+                  {% for photo in selected_row._photo_preview_items %}
+                    <figure class="media-card detail-media-card">
+                      <button
+                        type="button"
+                        class="media-action-button"
+                        data-delete-photo-kind="{{ photo.kind }}"
+                        {% if photo.kind == 'gallery' %}data-delete-photo-index="{{ photo.index }}"{% endif %}
+                        aria-label="Delete {{ photo.label|lower }}"
+                        {% if staging_locked %}disabled{% endif %}
+                      >
+                        x
+                      </button>
+                      <div class="media-thumb media-thumb-photo">
+                        <img
+                          src="{{ photo.url }}"
+                          alt="{{ photo.label }} image for {{ selected_row.club_name or selected_row.external_id }}"
+                          loading="lazy"
+                          data-preview-image="1"
+                        >
+                      </div>
+                      <figcaption class="media-card-caption">
+                        <span class="media-kind-badge">{{ photo.label }}</span>
+                        <span class="media-meta" data-image-size></span>
+                      </figcaption>
+                    </figure>
+                  {% else %}
+                    <div class="media-empty">No pictures yet.</div>
+                  {% endfor %}
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <label>
+            {{ ui.field_label("Logo source URL", field_help.review_detail.logo_source_url) }}
+            <input name="logo_source_url" value="{{ selected_row.logo_source_url }}" {% if staging_locked %}disabled{% endif %}>
+          </label>
+
+          <div class="grid-two-tight">
+            <label>
+              {{ ui.field_label("Logo rights", field_help.review_detail.logo_rights_status) }}
+              <select name="logo_rights_status" {% if staging_locked %}disabled{% endif %}>
+                {% for item in ['', 'official-site', 'official-social', 'club-provided', 'licensed', 'unknown', 'do-not-import'] %}
+                  <option value="{{ item }}" {% if selected_row.logo_rights_status == item %}selected{% endif %}>{{ item or "blank" }}</option>
+                {% endfor %}
+              </select>
+            </label>
+            <label>
+              {{ ui.field_label("Image rights", field_help.review_detail.image_rights_status) }}
+              <select name="image_rights_status" {% if staging_locked %}disabled{% endif %}>
+                {% for item in ['', 'official-site', 'official-social', 'club-provided', 'licensed', 'unknown', 'do-not-import'] %}
+                  <option value="{{ item }}" {% if selected_row.image_rights_status == item %}selected{% endif %}>{{ item or "blank" }}</option>
+                {% endfor %}
+              </select>
+            </label>
+          </div>
+
+          <label>
+            {{ ui.field_label("Cover source URL", field_help.review_detail.cover_source_url) }}
+            <input name="cover_source_url" value="{{ selected_row.cover_source_url }}" {% if staging_locked %}disabled{% endif %}>
+          </label>
+
+          <label>
+            {{ ui.field_label("Gallery URLs", field_help.review_detail.gallery_source_urls) }}
+            <textarea name="gallery_source_urls" rows="4" {% if staging_locked %}disabled{% endif %}>{{ selected_row.gallery_source_urls|replace('::', '\n') }}</textarea>
+          </label>
+
+          <div class="autosave-status" data-autosave-status>
+            {% if staging_locked %}
+              Read-only while discovery is running.
+            {% else %}
+              Changes save automatically.
+            {% endif %}
+          </div>
+        </form>
+      {% else %}
+        <p class="muted">Choose a row from the table to review it.</p>
+      {% endif %}
+    </section>
+  </section>
+</section>
+{% endblock %}

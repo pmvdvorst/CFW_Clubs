@@ -31,6 +31,8 @@ Set your OpenAI API key:
 export OPENAI_API_KEY="your-api-key"
 ```
 
+If you are using the local review app, the Discovery page now also includes a masked `OpenAI API key` field. The app stores that key only for the current app session and passes it to the discovery subprocess through `OPENAI_API_KEY`, so it does not appear in the command preview.
+
 ## Example Run
 
 Generate Ontario city seeds:

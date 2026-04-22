@@ -7,6 +7,7 @@ import argparse
 import csv
 import re
 import sys
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from urllib.parse import urlparse
@@ -158,6 +159,17 @@ MIN_PHOTO_SCORE = 1.0
 
 class ValidationError(Exception):
     """Raised when a row cannot be safely converted."""
+
+
+@dataclass
+class ConversionPreview:
+    """Preview of a staged-to-GeoDirectory export run."""
+
+    rows_to_write: list[dict[str, str]]
+    skipped: int
+    skipped_for_status: int
+    skipped_errors: list[str]
+    include_statuses: set[str]
 
 
 def parse_args() -> argparse.Namespace:
@@ -510,62 +522,118 @@ def should_include(row: dict[str, str], include_statuses: set[str]) -> bool:
     return clean_text(row.get("review_status", "")).lower() in include_statuses
 
 
-def main() -> int:
-    args = parse_args()
-    include_statuses = {
+def parse_include_statuses(value: str | set[str] | list[str] | tuple[str, ...] | None) -> set[str]:
+    if value is None:
+        return set(DEFAULT_INCLUDE_STATUSES)
+    if isinstance(value, str):
+        statuses = value.split(",")
+    else:
+        statuses = list(value)
+    parsed = {
         clean_text(status).lower()
-        for status in args.include_status.split(",")
+        for status in statuses
         if clean_text(status)
-    } or DEFAULT_INCLUDE_STATUSES
+    }
+    return parsed or set(DEFAULT_INCLUDE_STATUSES)
 
-    with args.input_csv.open(newline="", encoding="utf-8") as infile:
+
+def prepare_rows_for_export(
+    rows: list[dict[str, str]],
+    *,
+    post_status: str,
+    post_author: str,
+    post_type: str,
+    strict: bool = False,
+    include_statuses: set[str] | str | list[str] | tuple[str, ...] | None = None,
+    start_line: int = 2,
+    now: datetime | None = None,
+) -> ConversionPreview:
+    allowed_statuses = parse_include_statuses(include_statuses)
+    preview_now = now or datetime.now()
+    rows_to_write: list[dict[str, str]] = []
+    skipped = 0
+    skipped_for_status = 0
+    skipped_errors: list[str] = []
+
+    for offset, row in enumerate(rows):
+        line_number = start_line + offset
+        title = clean_text(row.get("club_name", "")) or clean_text(row.get("external_id", ""))
+        if not should_include(row, allowed_statuses):
+            skipped += 1
+            skipped_for_status += 1
+            continue
+        try:
+            rows_to_write.append(
+                convert_row(
+                    row,
+                    post_status=post_status,
+                    post_author=post_author,
+                    post_type=post_type,
+                    now=preview_now,
+                )
+            )
+        except ValidationError as exc:
+            message = f"Line {line_number} ({title or 'unnamed row'}): {exc}"
+            if strict:
+                raise ValidationError(message) from exc
+            skipped += 1
+            skipped_errors.append(message)
+
+    return ConversionPreview(
+        rows_to_write=rows_to_write,
+        skipped=skipped,
+        skipped_for_status=skipped_for_status,
+        skipped_errors=skipped_errors,
+        include_statuses=allowed_statuses,
+    )
+
+
+def load_staging_rows(path: Path) -> tuple[list[dict[str, str]], list[str]]:
+    with path.open(newline="", encoding="utf-8") as infile:
         reader = csv.DictReader(infile)
         if reader.fieldnames is None:
-            print("Input CSV is missing headers.", file=sys.stderr)
-            return 1
+            raise ValidationError("Input CSV is missing headers.")
+        return list(reader), list(reader.fieldnames)
 
-        rows_to_write: list[dict[str, str]] = []
-        skipped = 0
-        skipped_for_status = 0
-        skipped_errors: list[str] = []
-        now = datetime.now()
 
-        for line_number, row in enumerate(reader, start=2):
-            title = clean_text(row.get("club_name", "")) or clean_text(row.get("external_id", ""))
-            if not should_include(row, include_statuses):
-                skipped += 1
-                skipped_for_status += 1
-                continue
-            try:
-                rows_to_write.append(
-                    convert_row(
-                        row,
-                        post_status=args.post_status,
-                        post_author=args.post_author,
-                        post_type=args.post_type,
-                        now=now,
-                    )
-                )
-            except ValidationError as exc:
-                message = f"Line {line_number} ({title or 'unnamed row'}): {exc}"
-                if args.strict:
-                    print(message, file=sys.stderr)
-                    return 1
-                skipped += 1
-                skipped_errors.append(message)
-
-    args.output_csv.parent.mkdir(parents=True, exist_ok=True)
-    with args.output_csv.open("w", newline="", encoding="utf-8") as outfile:
+def write_geodirectory_csv(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as outfile:
         writer = csv.DictWriter(outfile, fieldnames=GD_FIELDNAMES)
         writer.writeheader()
-        writer.writerows(rows_to_write)
+        writer.writerows(rows)
+
+
+def main() -> int:
+    args = parse_args()
+    try:
+        input_rows, _ = load_staging_rows(args.input_csv)
+    except ValidationError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    try:
+        preview = prepare_rows_for_export(
+            input_rows,
+            post_status=args.post_status,
+            post_author=args.post_author,
+            post_type=args.post_type,
+            strict=args.strict,
+            include_statuses=args.include_status,
+            start_line=2,
+        )
+    except ValidationError as exc:
+        print(str(exc), file=sys.stderr)
+        return 1
+
+    write_geodirectory_csv(args.output_csv, preview.rows_to_write)
 
     print(
-        f"Wrote {len(rows_to_write)} GeoDirectory rows to {args.output_csv} "
-        f"(skipped {skipped})."
+        f"Wrote {len(preview.rows_to_write)} GeoDirectory rows to {args.output_csv} "
+        f"(skipped {preview.skipped})."
     )
-    if not rows_to_write and skipped_for_status:
-        printable_statuses = ", ".join(sorted(include_statuses))
+    if not preview.rows_to_write and preview.skipped_for_status:
+        printable_statuses = ", ".join(sorted(preview.include_statuses))
         print(
             "Note: all skipped rows were filtered out by review_status. "
             f"Current export only includes: {printable_statuses}.",
@@ -576,7 +644,7 @@ def main() -> int:
             "--include-status pending,approved,published for a draft import.",
             file=sys.stderr,
         )
-    for message in skipped_errors:
+    for message in preview.skipped_errors:
         print(f"Warning: {message}", file=sys.stderr)
     return 0
 

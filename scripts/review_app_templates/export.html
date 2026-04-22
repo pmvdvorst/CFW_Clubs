@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Export</h2>
+    <p>Preview exactly what will land in the GeoDirectory CSV before writing the final file.</p>
+  </div>
+  <div class="page-meta">
+    <span class="meta-chip">{{ selected_count }} selected rows</span>
+    <span class="meta-chip">{{ generated_count }} valid GeoDirectory rows</span>
+    <span class="meta-chip">File: {{ staging_csv }}</span>
+  </div>
+</section>
+
+{% if staging_locked and lock_details %}
+  <div class="flash flash-warning">Export is blocked while {{ lock_details.owner }} is writing this staging file.</div>
+{% endif %}
+
+<section class="grid-two">
+  <section class="panel stack-lg">
+    <h3>Export Settings</h3>
+    <form method="post" action="{{ url_for('export_generate') }}" class="stack-md">
+      <input type="hidden" name="staging_csv" value="{{ staging_csv }}">
+
+      <label>
+        {{ ui.field_label("Output CSV", field_help.export.output_csv) }}
+        <input name="output_csv" value="{{ output_csv }}" {% if staging_locked %}disabled{% endif %}>
+      </label>
+
+      <div class="grid-three">
+        <label>
+          {{ ui.field_label("Post status", field_help.export.post_status) }}
+          <input name="post_status" value="{{ post_status }}" {% if staging_locked %}disabled{% endif %}>
+        </label>
+        <label>
+          {{ ui.field_label("Post author", field_help.export.post_author) }}
+          <input name="post_author" value="{{ post_author }}" {% if staging_locked %}disabled{% endif %}>
+        </label>
+        <label>
+          {{ ui.field_label("Post type", field_help.export.post_type) }}
+          <input name="post_type" value="{{ post_type }}" {% if staging_locked %}disabled{% endif %}>
+        </label>
+      </div>
+
+      <div class="button-row">
+        <button type="submit" class="button button-primary" {% if staging_locked or has_errors or generated_count == 0 %}disabled{% endif %}>Generate CSV</button>
+        <a class="button" href="{{ url_for('review_page', staging_csv=staging_csv) }}">Back to review</a>
+      </div>
+
+      {% if has_errors %}
+        <p class="muted">Generation is disabled until the validation errors below are fixed.</p>
+      {% endif %}
+    </form>
+  </section>
+
+  <section class="panel stack-lg">
+    <h3>Selected Rows</h3>
+    <div class="table-panel compact-table">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Club</th>
+            <th>Status</th>
+            <th>City</th>
+            <th>Flags</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in selected_rows %}
+            <tr>
+              <td>{{ row.club_name or row.external_id }}</td>
+              <td>{{ row.review_status }}</td>
+              <td>{{ row.city }}</td>
+              <td>
+                <div class="flag-list">
+                  {% for label in row._flag_labels %}
+                    <span class="flag-badge">{{ label }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="4" class="empty-state">No rows are selected for this export batch yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<section class="grid-two">
+  <section class="panel stack-lg">
+    <h3>Validation Errors</h3>
+    {% if preview.skipped_errors %}
+      <ul class="error-list">
+        {% for message in preview.skipped_errors %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="muted">No validation errors in the current selected approved rows.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel stack-lg">
+    <h3>Preview Summary</h3>
+    <div class="status-grid">
+      <div>
+        <span class="label">Rows to write</span>
+        <strong>{{ generated_count }}</strong>
+      </div>
+      <div>
+        <span class="label">Skipped rows</span>
+        <strong>{{ preview.skipped }}</strong>
+      </div>
+      <div>
+        <span class="label">Skipped for status</span>
+        <strong>{{ preview.skipped_for_status }}</strong>
+      </div>
+      <div>
+        <span class="label">Output path</span>
+        <strong>{{ output_csv }}</strong>
+      </div>
+    </div>
+  </section>
+</section>
+
+<section class="panel stack-lg">
+  <h3>GeoDirectory Preview</h3>
+  <div class="table-panel wide-table">
+    <table class="data-table">
+      <thead>
+        <tr>
+          {% for column in preview_columns %}
+            <th>{{ column }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in preview.rows_to_write %}
+          <tr>
+            {% for column in preview_columns %}
+              <td>{{ row[column] }}</td>
+            {% endfor %}
+          </tr>
+        {% else %}
+          <tr>
+            <td colspan="{{ preview_columns|length }}" class="empty-state">No approved selected rows are ready to export yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

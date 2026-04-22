@@ -8,6 +8,7 @@ import contextlib
 import csv
 import io
 import zipfile
+from dataclasses import dataclass
 from pathlib import Path
 
 
@@ -32,6 +33,21 @@ FALLBACK_COUNTRY_NAMES = {
     "NZ": "New Zealand",
     "IE": "Ireland",
 }
+
+
+@dataclass(frozen=True)
+class SeedGenerationOptions:
+    geonames_file: Path
+    output_csv: Path
+    country_code: str
+    admin1: str = ""
+    admin1_code: str = ""
+    country_info_file: Path | None = None
+    admin1_codes_file: Path | None = None
+    feature_codes: str = ",".join(sorted(DEFAULT_FEATURE_CODES))
+    min_population: int = 15000
+    max_locations: int = 250
+    query_hint: str = "road gravel mtb"
 
 
 def clean_text(value: str) -> str:
@@ -151,21 +167,25 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main() -> int:
-    args = parse_args()
-    country_code = clean_text(args.country_code).upper()
+def parse_feature_codes(value: str) -> set[str]:
     feature_codes = {
         clean_text(code).upper()
-        for code in args.feature_codes.split(",")
+        for code in value.split(",")
         if clean_text(code)
     } or DEFAULT_FEATURE_CODES
-    country_names = load_country_names(args.country_info_file)
-    admin1_names = load_admin1_names(args.admin1_codes_file)
-    selected_admin1_code = clean_text(args.admin1_code)
-    selected_admin1_name = clean_text(args.admin1).lower()
+    return feature_codes
+
+
+def generate_location_seed_rows(options: SeedGenerationOptions) -> tuple[list[dict[str, str]], str]:
+    country_code = clean_text(options.country_code).upper()
+    feature_codes = parse_feature_codes(options.feature_codes)
+    country_names = load_country_names(options.country_info_file)
+    admin1_names = load_admin1_names(options.admin1_codes_file)
+    selected_admin1_code = clean_text(options.admin1_code)
+    selected_admin1_name = clean_text(options.admin1).lower()
 
     if selected_admin1_name and not admin1_names and not selected_admin1_code:
-        raise SystemExit(
+        raise ValueError(
             "--admin1 requires --admin1-codes-file so the province/state name can be resolved."
         )
 
@@ -173,7 +193,7 @@ def main() -> int:
     seen_ids: set[str] = set()
     country_name = country_names.get(country_code, country_code)
 
-    with open_text_stream(args.geonames_file) as handle:
+    with open_text_stream(options.geonames_file) as handle:
         for raw_line in handle:
             line = raw_line.strip()
             if not line:
@@ -218,7 +238,7 @@ def main() -> int:
                 continue
 
             population_value = int(population or 0)
-            if population_value < args.min_population:
+            if population_value < options.min_population:
                 continue
 
             city = clean_text(asciiname or name)
@@ -242,24 +262,66 @@ def main() -> int:
                         "postal_code": "",
                         "latitude": clean_text(latitude),
                         "longitude": clean_text(longitude),
-                        "query_hint": clean_text(args.query_hint),
+                        "query_hint": clean_text(options.query_hint),
                     },
                 )
             )
 
     rows.sort(key=lambda item: item[0], reverse=True)
-    selected_rows = [row for _, row in rows[: max(0, args.max_locations)]]
+    selected_rows = [row for _, row in rows[: max(0, options.max_locations)]]
+    return selected_rows, country_name
 
-    args.output_csv.parent.mkdir(parents=True, exist_ok=True)
-    with args.output_csv.open("w", newline="", encoding="utf-8") as handle:
+
+def write_location_seed_csv(path: Path, rows: list[dict[str, str]]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=LOCATION_FIELDNAMES)
         writer.writeheader()
-        writer.writerows(selected_rows)
+        writer.writerows(rows)
+
+
+def build_seed_generation_message(
+    *,
+    row_count: int,
+    country_name: str,
+    output_csv: Path,
+    admin1: str = "",
+) -> str:
+    return (
+        f"Wrote {row_count} location seeds for {country_name}"
+        + (f" / {admin1}" if clean_text(admin1) else "")
+        + f" to {output_csv}."
+    )
+
+
+def main() -> int:
+    args = parse_args()
+    options = SeedGenerationOptions(
+        geonames_file=args.geonames_file,
+        output_csv=args.output_csv,
+        country_code=args.country_code,
+        admin1=args.admin1 or "",
+        admin1_code=args.admin1_code or "",
+        country_info_file=args.country_info_file,
+        admin1_codes_file=args.admin1_codes_file,
+        feature_codes=args.feature_codes,
+        min_population=args.min_population,
+        max_locations=args.max_locations,
+        query_hint=args.query_hint,
+    )
+    try:
+        selected_rows, country_name = generate_location_seed_rows(options)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
+    write_location_seed_csv(options.output_csv, selected_rows)
 
     print(
-        f"Wrote {len(selected_rows)} location seeds for {country_name}"
-        + (f" / {args.admin1}" if args.admin1 else "")
-        + f" to {args.output_csv}."
+        build_seed_generation_message(
+            row_count=len(selected_rows),
+            country_name=country_name,
+            admin1=options.admin1,
+            output_csv=options.output_csv,
+        )
     )
     return 0
 

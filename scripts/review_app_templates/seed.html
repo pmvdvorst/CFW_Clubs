@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% import "macros.html" as ui %}
+
+{% block content %}
+<section class="page-header">
+  <div>
+    <h2>Seed Setup</h2>
+    <p>Generate a location seed CSV from GeoNames, preview the rows, and save only after the locations look right.</p>
+  </div>
+  <div class="page-meta">
+    <span class="meta-chip">Next step: Discovery</span>
+    <span class="meta-chip">Staging file: {{ staging_csv }}</span>
+  </div>
+</section>
+
+<section class="grid-two">
+  <form method="post" action="{{ url_for('seed_page') }}" class="panel stack-lg">
+    <h3>Seed Filters</h3>
+
+    <label>
+      {{ ui.field_label("GeoNames file", field_help.seed.geonames_file) }}
+      <input name="geonames_file" list="seed-input-files" value="{{ form_values.geonames_file }}" required>
+    </label>
+
+    <label>
+      {{ ui.field_label("Output seed CSV", field_help.seed.output_csv) }}
+      <input name="output_csv" list="seed-input-files" value="{{ form_values.output_csv }}" required>
+    </label>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Country code", field_help.seed.country_code) }}
+        <input name="country_code" value="{{ form_values.country_code }}" required>
+      </label>
+      <label>
+        {{ ui.field_label("Province or state", field_help.seed.admin1) }}
+        <input name="admin1" value="{{ form_values.admin1 }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Admin1 code", field_help.seed.admin1_code) }}
+        <input name="admin1_code" value="{{ form_values.admin1_code }}">
+      </label>
+      <label>
+        {{ ui.field_label("Minimum population", field_help.seed.min_population) }}
+        <input name="min_population" type="number" min="0" value="{{ form_values.min_population }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Country info file", field_help.seed.country_info_file) }}
+        <input name="country_info_file" list="seed-input-files" value="{{ form_values.country_info_file }}">
+      </label>
+      <label>
+        {{ ui.field_label("Admin1 codes file", field_help.seed.admin1_codes_file) }}
+        <input name="admin1_codes_file" list="seed-input-files" value="{{ form_values.admin1_codes_file }}">
+      </label>
+    </div>
+
+    <div class="grid-two-tight">
+      <label>
+        {{ ui.field_label("Feature codes", field_help.seed.feature_codes) }}
+        <input name="feature_codes" value="{{ form_values.feature_codes }}">
+      </label>
+      <label>
+        {{ ui.field_label("Max locations", field_help.seed.max_locations) }}
+        <input name="max_locations" type="number" min="1" value="{{ form_values.max_locations }}">
+      </label>
+    </div>
+
+    <label>
+      {{ ui.field_label("Query hint", field_help.seed.query_hint) }}
+      <input name="query_hint" value="{{ form_values.query_hint }}">
+    </label>
+
+    <div class="button-row">
+      <button type="submit" name="seed_action" value="preview" class="button button-primary">Preview seeds</button>
+      <button type="submit" name="seed_action" value="save" class="button">Save seed CSV</button>
+      <a class="button" href="{{ url_for('discover_page', seed_csv=form_values.output_csv, staging_csv=staging_csv) }}">Open discovery</a>
+    </div>
+  </form>
+
+  <section class="panel stack-lg">
+    <h3>Preview</h3>
+    {% if preview_message %}
+      <p>{{ preview_message }}</p>
+    {% else %}
+      <p class="muted">Run a preview to verify the locations before saving the seed CSV.</p>
+    {% endif %}
+
+    {% if saved_output_csv %}
+      <div class="button-row">
+        <span class="meta-chip">Saved to {{ saved_output_csv }}</span>
+        <a class="button button-primary" href="{{ url_for('discover_page', seed_csv=saved_output_csv, staging_csv=staging_csv) }}">Use this seed CSV in Discovery</a>
+      </div>
+    {% elif output_exists %}
+      <div class="button-row">
+        <span class="meta-chip">Current output path already exists</span>
+        <a class="button" href="{{ url_for('discover_page', seed_csv=output_csv, staging_csv=staging_csv) }}">Use current seed CSV in Discovery</a>
+      </div>
+    {% endif %}
+
+    <div class="stack-md">
+      <div class="section-heading">
+        {{ ui.field_label("Map-style grouping", "Nearby seed locations are grouped into simple local clusters using their coordinates, so you can quickly spot whether the coverage looks right before saving.") }}
+      </div>
+      {% if seed_map.has_points %}
+        <div class="seed-map-shell">
+          <svg class="seed-map" viewBox="0 0 {{ seed_map.width }} {{ seed_map.height }}" role="img" aria-label="Seed location cluster map preview">
+            <rect x="0" y="0" width="{{ seed_map.width }}" height="{{ seed_map.height }}" rx="18" class="seed-map-bg"></rect>
+            {% for cluster in seed_map.clusters %}
+              <g class="seed-cluster">
+                <circle
+                  cx="{{ cluster.x }}"
+                  cy="{{ cluster.y }}"
+                  r="{{ cluster.radius }}"
+                  class="seed-cluster-bubble"
+                >
+                  <title>{{ cluster.name }} · {{ cluster.count }} locations · {{ cluster.city_list }}</title>
+                </circle>
+                <text x="{{ cluster.x }}" y="{{ cluster.y + 4 }}" text-anchor="middle" class="seed-cluster-count">{{ cluster.count }}</text>
+                <text x="{{ cluster.label_x }}" y="{{ cluster.label_y }}" text-anchor="middle" class="seed-cluster-label">{{ cluster.name }}</text>
+              </g>
+            {% endfor %}
+          </svg>
+          <div class="seed-map-axis">
+            <span>West {{ seed_map.min_longitude }}</span>
+            <span>East {{ seed_map.max_longitude }}</span>
+          </div>
+          <div class="seed-map-axis seed-map-axis-vertical">
+            <span>North {{ seed_map.max_latitude }}</span>
+            <span>South {{ seed_map.min_latitude }}</span>
+          </div>
+        </div>
+
+        <div class="seed-cluster-grid">
+          {% for cluster in seed_map.clusters %}
+            <article class="seed-cluster-card">
+              <h4>{{ cluster.name }}</h4>
+              <p>{{ cluster.count }} seed{{ "" if cluster.count == 1 else "s" }} in {{ cluster.region }}</p>
+              <p class="muted">{{ cluster.city_list }}</p>
+            </article>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="muted">Preview rows with coordinates will appear here as grouped location bubbles.</p>
+      {% endif %}
+    </div>
+
+    <div class="table-panel compact-table">
+      <table class="data-table">
+        <thead>
+          <tr>
+            {% for column in preview_columns %}
+              <th>{{ column }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in preview_rows %}
+            <tr>
+              {% for column in preview_columns %}
+                <td>{{ row[column] }}</td>
+              {% endfor %}
+            </tr>
+          {% else %}
+            <tr>
+              <td colspan="{{ preview_columns|length }}" class="empty-state">No preview rows yet.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</section>
+
+<datalist id="seed-input-files">
+  {% for file_path in seed_input_files %}
+    <option value="{{ file_path }}"></option>
+  {% endfor %}
+</datalist>
+{% endblock %}
